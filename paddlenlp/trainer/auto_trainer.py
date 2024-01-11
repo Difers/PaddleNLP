@@ -132,12 +132,13 @@ class SemiAutoTrainer(Trainer):
             else:
                 loss.backward()
         else:
-
             input_ids, labels = tuple(inputs.values())
             loss = model(input_ids, labels)
 
-        if self.args.pipeline_parallel_degree > 1 and self.args.run_static_semi_auto:
-            self._pp_data_buffer = {}
+            if self.args.pipeline_parallel_degree > 1:
+                self._pp_data_buffer = {}
+            elif self.args.gradient_accumulation_steps > 1:
+                loss = loss / self.args.gradient_accumulation_steps
 
         if isinstance(loss, paddle.Tensor):
             return loss.detach()
